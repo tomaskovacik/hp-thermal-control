@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Fan hub -->
+  <circle cx="24" cy="24" r="4" fill="#555"/>
+  <!-- Fan blades (4 blades rotated 90° each) -->
+  <g fill="#1e88e5" opacity="0.9">
+    <!-- Blade top -->
+    <path d="M24 20 C20 14 13 12 14 8 C18 6 26 10 24 20Z"/>
+    <!-- Blade right -->
+    <path d="M28 24 C34 20 36 13 40 14 C42 18 38 26 28 24Z"/>
+    <!-- Blade bottom -->
+    <path d="M24 28 C28 34 35 36 34 40 C30 42 22 38 24 28Z"/>
+    <!-- Blade left -->
+    <path d="M20 24 C14 28 12 35 8 34 C6 30 10 22 20 24Z"/>
+  </g>
+  <!-- Center cap -->
+  <circle cx="24" cy="24" r="3" fill="#1565c0"/>
+  <circle cx="24" cy="24" r="1.5" fill="#90caf9"/>
+</svg>

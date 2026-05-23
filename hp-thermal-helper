@@ -1,0 +1,69 @@
+#!/bin/bash
+# hp-thermal-helper — privileged sysfs/config write helper for hp-thermal-applet
+# Invoked via pkexec (polkit action: com.hp.thermal.apply)
+#
+# Usage:
+#   turbo <0|1>                    — set /sys/../no_turbo at runtime
+#   rapl <microwatts>              — set RAPL PL1 at runtime
+#   bios-set <attr-name>           — stdin: "password\nvalue\n"
+#   tmpfiles-set <microwatts>      — persist RAPL in /etc/tmpfiles.d/hp-thermal.conf
+#   tmpfiles-unset                 — remove RAPL persistence
+#   grub-turbo <0|1>               — persist turbo state via GRUB cmdline + update-grub
+
+BIOSCFG_AUTH="/sys/class/firmware-attributes/hp-bioscfg/authentication/Setup Password/current_password"
+BIOSCFG_ATTRS="/sys/class/firmware-attributes/hp-bioscfg/attributes"
+NO_TURBO="/sys/devices/system/cpu/intel_pstate/no_turbo"
+RAPL_PL1="/sys/class/powercap/intel-rapl:0/constraint_0_power_limit_uw"
+TMPFILES="/etc/tmpfiles.d/hp-thermal.conf"
+GRUB_DEFAULT="/etc/default/grub"
+
+case "$1" in
+    turbo)
+        [[ "$2" =~ ^[01]$ ]] || { echo "Invalid value: $2" >&2; exit 1; }
+        printf '%s' "$2" > "$NO_TURBO"
+        ;;
+
+    rapl)
+        [[ "$2" =~ ^[0-9]+$ ]] || { echo "Invalid value: $2" >&2; exit 1; }
+        (( $2 >= 5000000 && $2 <= 100000000 )) || { echo "Value out of safe range (5W-100W)" >&2; exit 1; }
+        printf '%s' "$2" > "$RAPL_PL1"
+        ;;
+
+    bios-set)
+        [[ -n "$2" ]] || { echo "Missing attribute name" >&2; exit 1; }
+        IFS= read -r password
+        IFS= read -r value
+        printf '%s' "$password" > "$BIOSCFG_AUTH" || { echo "Auth failed" >&2; exit 1; }
+        printf '%s' "$value" > "$BIOSCFG_ATTRS/$2/current_value"
+        ;;
+
+    tmpfiles-set)
+        [[ "$2" =~ ^[0-9]+$ ]] || { echo "Invalid value: $2" >&2; exit 1; }
+        (( $2 >= 5000000 && $2 <= 100000000 )) || { echo "Value out of safe range" >&2; exit 1; }
+        touch "$TMPFILES"
+        grep -v "intel-rapl" "$TMPFILES" > "${TMPFILES}.tmp" && mv "${TMPFILES}.tmp" "$TMPFILES"
+        echo "w $RAPL_PL1 - - - - $2" >> "$TMPFILES"
+        ;;
+
+    tmpfiles-unset)
+        [[ -f "$TMPFILES" ]] || exit 0
+        grep -v "intel-rapl" "$TMPFILES" > "${TMPFILES}.tmp" && mv "${TMPFILES}.tmp" "$TMPFILES"
+        ;;
+
+    grub-turbo)
+        [[ "$2" =~ ^[01]$ ]] || { echo "Invalid value: $2" >&2; exit 1; }
+        [[ -f "$GRUB_DEFAULT" ]] || { echo "GRUB config not found" >&2; exit 1; }
+        # Remove any existing intel_pstate=no_turbo from cmdline
+        sed -i 's/ intel_pstate=no_turbo//g' "$GRUB_DEFAULT"
+        if [[ "$2" == "1" ]]; then
+            # no_turbo=1 means turbo OFF — add kernel param
+            sed -i 's/^\(GRUB_CMDLINE_LINUX_DEFAULT="[^"]*\)"/\1 intel_pstate=no_turbo"/' "$GRUB_DEFAULT"
+        fi
+        update-grub 2>&1 || grub2-mkconfig -o /boot/grub2/grub.cfg 2>&1
+        ;;
+
+    *)
+        echo "Unknown action: $1" >&2
+        exit 1
+        ;;
+esac

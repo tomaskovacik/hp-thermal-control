@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.log
+a
+acpi/
+copilot.txt
+hp-thermal-boot-apply
+hp_fan_control.service
