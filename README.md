@@ -19,6 +19,14 @@ A GTK system tray applet for thermal and power management on HP ZBook laptops ru
 - **Fan Always On (AC)** — BIOS setting via `hp_bioscfg`
 - **BIOS password management** — stored securely in GNOME Keyring (Seahorse)
 
+## Why this exists
+
+On **Windows**, HP provides **HP Command Center** for thermal management, and **ThrottleStop** is a popular third-party tool for RAPL power limit control on Intel laptops.
+
+On **Linux**, neither exists. This applet fills that gap — think of it as a **Linux ThrottleStop + HP BIOS settings panel** for HP ZBook laptops.
+
+Standard Linux power daemons (TLP, power-profiles-daemon, auto-cpufreq) do **not** touch RAPL power limits. `powercap-utils` can set PL1 from CLI but has no GUI. This applet is the only Linux GUI with a RAPL slider combined with HP-specific BIOS attribute control.
+
 ## Why RAPL?
 
 Direct EC fan speed control is impossible on HP ZBook Firefly G10 — the EC firmware overrides all register writes immediately. RAPL PL1 capping is the most effective solution:
