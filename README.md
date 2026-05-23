@@ -4,6 +4,12 @@ A GTK system tray applet for thermal and power management on HP ZBook laptops ru
 
 ![HP Thermal Monitor](hp-thermal-applet.svg)
 
+# HP Thermal Control
+
+![HP Thermal Monitor](hp-thermal-applet.svg)
+
+![Screenshot](screenshot.png)
+
 ## Features
 
 - **Live sensor dashboard** — CPU temperature, fan RPM (via `hp_wmi_sensors`)
